@@ -2,6 +2,11 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.jruby</groupId>
+    <artifactId>jruby-parent</artifactId>
+    <version>9.0.0.0.pre1</version>
+  </parent>
   <groupId>rubygems</groupId>
   <artifactId>jruby-readline</artifactId>
   <version>1.0.dev-SNAPSHOT</version>
@@ -19,12 +24,21 @@
     <connection>https://github.com/jruby/jruby.git</connection>
     <url>https://github.com/jruby/jruby</url>
   </scm>
+  <distributionManagement>
+    <repository>
+      <id>sonatype-nexus-staging</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+    <snapshotRepository>
+      <id>sonatype-nexus-snapshots</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
   <properties>
     <tesla.dump.readonly>true</tesla.dump.readonly>
-    <gem.path>${gem.home}</gem.path>
-    <gem.home>${basedir}/../target/rubygems</gem.home>
-    <jruby.plugins.version>1.0.7</jruby.plugins.version>
+    <jruby.plugins.version>1.0.8</jruby.plugins.version>
     <tesla.dump.pom>pom.xml</tesla.dump.pom>
+    <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
   </properties>
   <dependencies>
     <dependency>
@@ -35,7 +49,7 @@
     <dependency>
       <groupId>org.jruby</groupId>
       <artifactId>jruby</artifactId>
-      <version>1.7.11</version>
+      <version>${project.parent.version}</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>
@@ -87,21 +101,6 @@
         </configuration>
       </plugin>
       <plugin>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>generate-test-resources</phase>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>lib</outputDirectory>
-              <useRepositoryLayout>true</useRepositoryLayout>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
         <groupId>de.saumya.mojo</groupId>
         <artifactId>gem-maven-plugin</artifactId>
         <version>${jruby.plugins.version}</version>
@@ -118,6 +117,20 @@
           <includeDependencies>true</includeDependencies>
           <useRepositoryLayout>true</useRepositoryLayout>
         </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>2.8.1</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>deploy</goal>
+            </goals>
+            <configuration>
+              <skip>false</skip>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

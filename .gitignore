@@ -1,0 +1,4 @@
+pkg/
+*.gemspec.xml
+lib/jline/
+lib/*jar
