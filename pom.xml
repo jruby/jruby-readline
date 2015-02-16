@@ -9,7 +9,7 @@
   </parent>
   <groupId>rubygems</groupId>
   <artifactId>jruby-readline</artifactId>
-  <version>1.0</version>
+  <version>1.1.dev-SNAPSHOT</version>
   <packaging>gem</packaging>
   <name>JRuby Readline</name>
   <description>readline extension for JRuby</description>
