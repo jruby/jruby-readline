@@ -9,11 +9,22 @@
   </parent>
   <groupId>rubygems</groupId>
   <artifactId>jruby-readline</artifactId>
-  <version>1.0.dev-SNAPSHOT</version>
+  <version>1.0</version>
   <packaging>gem</packaging>
   <name>JRuby Readline</name>
   <description>readline extension for JRuby</description>
   <url>https://github.com/jruby/jruby</url>
+  <licenses>
+    <license>
+      <name>EPL-1.0</name>
+    </license>
+    <license>
+      <name>GPL-2.0</name>
+    </license>
+    <license>
+      <name>LGPL-2.1</name>
+    </license>
+  </licenses>
   <developers>
     <developer>
       <name>JRuby contributors</name>
@@ -134,4 +145,33 @@
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>release</id>
+      <activation>
+        <property>
+          <name>performRelease</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <defaultGoal>deploy</defaultGoal>
+        <plugins>
+          <plugin>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.5</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

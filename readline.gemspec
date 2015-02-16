@@ -10,6 +10,7 @@ Gem::Specification.new do |s|
   s.summary = "JRuby Readline"
   s.homepage = 'https://github.com/jruby/jruby'
   s.description = "readline extension for JRuby"
+  s.licenses = [ 'EPL-1.0', 'GPL-2.0', 'LGPL-2.1' ]
   s.files = Dir['[A-Z]*'] + Dir['lib/**/*']
   s.platform = 'java'
 

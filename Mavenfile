@@ -29,4 +29,16 @@ plugin :deploy, '2.8.1' do
   execute_goals( :deploy, :skip => false )
 end
 
+profile :id => 'release' do
+  activation do
+    property :name => 'performRelease', :value => 'true'
+  end
+  build do
+    default_goal :deploy
+  end
+  plugin :gpg, '1.5' do
+    execute_goal 'sign', :id => 'sign-artifacts', :phase => 'verify'
+  end
+end
+
 # vim: syntax=Ruby
