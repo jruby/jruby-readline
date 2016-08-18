@@ -13,7 +13,7 @@
   <packaging>gem</packaging>
   <name>JRuby Readline</name>
   <description>readline extension for JRuby</description>
-  <url>https://github.com/jruby/jruby</url>
+  <url>https://github.com/jruby/jruby-readline</url>
   <licenses>
     <license>
       <name>EPL-1.0</name>
@@ -32,8 +32,8 @@
     </developer>
   </developers>
   <scm>
-    <connection>https://github.com/jruby/jruby.git</connection>
-    <url>https://github.com/jruby/jruby</url>
+    <connection>https://github.com/jruby/jruby-readline.git</connection>
+    <url>https://github.com/jruby/jruby-readline</url>
   </scm>
   <distributionManagement>
     <repository>
