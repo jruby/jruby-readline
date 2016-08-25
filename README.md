@@ -1,13 +1,11 @@
-use ruby-maven to have the version changes propagated into the pom.xml
-
 ## deploy snaphot
 
-    rmvn deploy
+    ./mvnw deploy
 
 needs to gem prerelease version
 
 ## deploy release
 
-    rmvn -Prelease
+    ./mvnw -Prelease
 
 needs to gem release version
