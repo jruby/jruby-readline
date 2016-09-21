@@ -102,7 +102,7 @@ public class Readline {
     // We lazily initialize this in case Readline.readline has been overridden in ruby (s_readline)
     protected static void initReadline(Ruby runtime, final ConsoleHolder holder) {
         try {
-            holder.readline = new ConsoleReader(runtime.getInputStream(), runtime.getOutputStream());
+            holder.readline = new ConsoleReader();
         } catch (IOException ioe) {
             throw runtime.newIOErrorFromException(ioe);
         }
