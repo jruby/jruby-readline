@@ -2,4 +2,3 @@ pkg/
 *.gemspec.xml
 lib/jline/
 lib/*jar
-dependency-reduced-pom.xml

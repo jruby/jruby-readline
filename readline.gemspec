@@ -13,6 +13,8 @@ Gem::Specification.new do |s|
   s.licenses = [ 'EPL-1.0', 'GPL-2.0', 'LGPL-2.1' ]
   s.files = Dir['[A-Z]*'] + Dir['lib/**/*']
   s.platform = 'java'
+
+  s.requirements << "jar jline:jline, #{Readline::Version::JLINE_VERSION}"
 end
 
 # vim: syntax=Ruby
