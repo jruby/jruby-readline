@@ -1,5 +1,8 @@
 require 'readline/version'
 
+require 'jar-dependencies'
+require_jar( 'jline', 'jline', Readline::Version::JLINE_VERSION )
+
 require "readline.jar"
 
 # boot extension
