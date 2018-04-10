@@ -1,7 +1,6 @@
 require 'readline/version'
 
-require 'jar-dependencies'
-require_jar( 'jline', 'jline', Readline::Version::JLINE_VERSION )
+require "jline/jline/#{Readline::Version::JLINE_VERSION}/jline-#{Readline::Version::JLINE_VERSION}.jar"
 
 require "readline.jar"
 
