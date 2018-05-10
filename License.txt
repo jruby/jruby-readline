@@ -1,4 +1,4 @@
-JRuby-OpenSSL is distributed under the same license as JRuby (http://www.jruby.org/).
+JRuby-Readline is distributed under the same license as JRuby (http://www.jruby.org/).
 
 Version: EPL 1.0/GPL 2.0/LGPL 2.1
 
@@ -25,6 +25,3 @@ decision by deleting the provisions above and replace them with the notice
 and other provisions required by the GPL or the LGPL. If you do not delete
 the provisions above, a recipient may use your version of this file under
 the terms of any one of the EPL, the GPL or the LGPL.
-
-JRuby-OpenSSL includes software by the Legion of the Bouncy Castle
-(http://bouncycastle.org/license.html).
