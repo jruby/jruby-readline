@@ -2,7 +2,7 @@
 
 gemspec :jar => 'readline.jar'
 
-parent 'org.jruby:jruby-parent', '9.1.2.0'
+parent 'org.jruby:jruby-parent', '9.1.16.0'
 
 # do not push gem to rubygems.org
 jruby_plugin! :gem do
