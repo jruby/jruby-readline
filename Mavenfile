@@ -19,6 +19,8 @@ distribution_management do
   repository :id => 'sonatype-nexus-staging', :url => 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
 end
 
+plugin :compiler, '3.1', :source => '1.6', :target => '1.6'
+
 # do not do anything on deploy unless when using the release profile
 plugin :deploy, '2.8.1' do
   execute_goals( :deploy, :skip => false )
