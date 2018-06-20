@@ -35,6 +35,6 @@ import org.jruby.runtime.load.Library;
 public class ReadlineService implements Library {
 
     public void load(final Ruby runtime, boolean wrap) throws IOException {
-        Readline.createReadline(runtime);
+        Readline.load(runtime);
     }
 }

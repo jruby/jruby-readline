@@ -39,15 +39,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-import static org.jruby.CompatVersion.*;
-
 import jline.console.ConsoleReader;
 import jline.console.CursorBuffer;
 import jline.console.completer.Completer;
 import jline.console.completer.FileNameCompleter;
 import jline.console.history.History;
 import jline.console.history.MemoryHistory;
-import org.jruby.CompatVersion;
+
 import org.jruby.Ruby;
 import org.jruby.RubyArray;
 import org.jruby.RubyModule;
@@ -70,8 +68,6 @@ import org.jruby.util.ByteList;
 public class Readline {
     public static final char ESC_KEY_CODE = (char)27;
     private final static boolean DEBUG = false;
-    private static IRubyObject COMPLETION_CASE_FOLD = null;
-
 
     public static class ConsoleHolder {
         public ConsoleReader readline;
@@ -79,17 +75,22 @@ public class Readline {
         public History history;
     }
 
-    public static void createReadline(Ruby runtime) throws IOException {
+    public static void load(Ruby runtime) {
+        createReadline(runtime);
+    }
+
+    public static void createReadline(Ruby runtime) {
         ConsoleHolder holder = new ConsoleHolder();
         holder.history = new MemoryHistory();
         holder.currentCompletor = null;
-        COMPLETION_CASE_FOLD = runtime.getNil();
 
         RubyModule mReadline = runtime.defineModule("Readline");
 
         mReadline.dataWrapStruct(holder);
 
         mReadline.defineAnnotatedMethods(Readline.class);
+        mReadline.setConstant("COMPLETION_CASE_FOLD", runtime.getNil(), true); // private_constant
+
         IRubyObject hist = runtime.getObject().callMethod(runtime.getCurrentContext(), "new");
         mReadline.setConstant("HISTORY", hist);
         hist.getSingletonClass().includeModule(runtime.getEnumerable());
@@ -270,16 +271,14 @@ public class Readline {
 
     @JRubyMethod(name = "completion_case_fold", module = true, visibility = PRIVATE)
     public static IRubyObject s_get_completion_case_fold(ThreadContext context, IRubyObject recv) {
-        Ruby runtime = context.runtime;
-        return COMPLETION_CASE_FOLD;
+        return context.runtime.getModule("Readline").getConstant("COMPLETION_CASE_FOLD");
     }
 
     @JRubyMethod(name = "completion_case_fold=", required = 1, module = true, visibility = PRIVATE)
     // FIXME: this is really a noop
-    public static IRubyObject s_set_completion_case_fold(ThreadContext context, IRubyObject recv,
-            IRubyObject other) {
-        Ruby runtime = context.runtime;
-        return COMPLETION_CASE_FOLD = other;
+    public static IRubyObject s_set_completion_case_fold(ThreadContext context, IRubyObject recv, IRubyObject other) {
+        context.runtime.getModule("Readline").setConstant("COMPLETION_CASE_FOLD", other, true);
+        return other;
     }
 
     @JRubyMethod(name = "get_screen_size", module = true, visibility = PRIVATE)
@@ -467,9 +466,9 @@ public class Readline {
     // Complete using a Proc object
     public static class ProcCompleter implements Completer {
 
-        IRubyObject procCompleter;
+        final IRubyObject procCompleter;
         //\t\n\"\\'`@$><=;|&{(
-        static private String[] delimiters = {" ", "\t", "\n", "\"", "\\", "'", "`", "@", "$", ">", "<", "=", ";", "|", "&", "{", "("};
+        static String[] delimiters = {" ", "\t", "\n", "\"", "\\", "'", "`", "@", "$", ">", "<", "=", ";", "|", "&", "{", "("};
 
         public ProcCompleter(IRubyObject procCompleter) {
             this.procCompleter = procCompleter;
