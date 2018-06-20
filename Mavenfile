@@ -15,8 +15,8 @@ jar 'org.jruby:jruby:${project.parent.version}', :scope => :provided
 properties 'jruby.plugins.version' => '1.1.5'
 
 distribution_management do
-  snapshot_repository :id => 'sonatype-nexus-snapshots', :url => 'https://oss.sonatype.org/content/repositories/snapshots'
-  repository :id => 'sonatype-nexus-staging', :url => 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+  snapshot_repository :id => :ossrh, :url => 'https://oss.sonatype.org/content/repositories/snapshots'
+  repository :id => :ossrh, :url => 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
 end
 
 plugin :compiler, '3.1', :source => '1.6', :target => '1.6'
