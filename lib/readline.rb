@@ -6,7 +6,7 @@ require "readline.jar"
 
 # boot extension
 if JRuby::Util.respond_to?(:load_ext)
-  JRuby::Util.load_ext('org.jruby.ext.readline.ReadlineService')
+  JRuby::Util.load_ext('org.jruby.ext.readline.Readline')
 else; require 'jruby'
   begin
     org.jruby.ext.readline.ReadlineService.new.load(JRuby.runtime, false)
