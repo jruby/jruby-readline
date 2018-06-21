@@ -41,7 +41,9 @@ import java.util.ListIterator;
 
 import jline.console.ConsoleReader;
 import jline.console.CursorBuffer;
+import jline.console.completer.CandidateListCompletionHandler;
 import jline.console.completer.Completer;
+import jline.console.completer.CompletionHandler;
 import jline.console.completer.FileNameCompleter;
 import jline.console.history.History;
 import jline.console.history.MemoryHistory;
@@ -77,8 +79,8 @@ public class Readline {
 
     public static class ConsoleHolder {
         public ConsoleReader readline;
-        public Completer currentCompletor;
-        public History history;
+        transient volatile Completer currentCompletor;
+        public final History history = new MemoryHistory();
     }
 
     public static void load(Ruby runtime) {
@@ -87,8 +89,6 @@ public class Readline {
 
     public static void createReadline(Ruby runtime) {
         ConsoleHolder holder = new ConsoleHolder();
-        holder.history = new MemoryHistory();
-        holder.currentCompletor = null;
 
         RubyModule mReadline = runtime.defineModule("Readline");
 
@@ -352,14 +352,43 @@ public class Readline {
 
     @JRubyMethod(name = "completion_append_character", module = true)
     public static IRubyObject completion_append_character(ThreadContext context, IRubyObject recv) {
-        return context.nil; // NOT IMPLEMENTED
+        ConsoleHolder holder = getHolderWithReadline(context.runtime);
+        CompletionHandler handler = holder.readline.getCompletionHandler();
+        if (handler instanceof CandidateListCompletionHandler) {
+            if (((CandidateListCompletionHandler) handler).getPrintSpaceAfterFullCompletion()) { // since JLine 2.13
+                return RubyString.newString(context.runtime, " ");
+            }
+        }
+        return context.nil;
     }
 
     @JRubyMethod(name = "completion_append_character=", module = true)
     public static IRubyObject set_completion_append_character(ThreadContext context, IRubyObject recv, IRubyObject achar) {
-        // IRB sets Readline.completion_append_character = nil (right before setting up completion_proc)
-        // warn(context, recv, "Readline.completion_append_character= not implemented");
-        return context.nil; // NOT IMPLEMENTED
+        ConsoleHolder holder = getHolderWithReadline(context.runtime);
+        CompletionHandler handler = holder.readline.getCompletionHandler();
+        // JLine has ' ' hard-coded on completion we support enabling/disabling ' ' :
+        if (achar == context.nil) {
+            setPrintSpaceAfterCompletion(handler, false);
+        } else {
+            IRubyObject c = achar.convertToString().op_aref(context, context.runtime.newFixnum(0));
+            if (c == context.nil) { // ''
+                setPrintSpaceAfterCompletion(handler, false);
+            } else {
+                if (c.convertToString().getByteList().charAt(0) == ' ') {
+                    setPrintSpaceAfterCompletion(handler, true);
+                } else {
+                    // (could use a custom completion handler if its really a desired feature)
+                    warn(context, recv, "Readline.completion_append_character '" + c + "' not supported");
+                }
+            }
+        }
+        return context.nil;
+    }
+
+    private static void setPrintSpaceAfterCompletion(CompletionHandler handler, boolean print) {
+        if (handler instanceof CandidateListCompletionHandler) {
+            ((CandidateListCompletionHandler) handler).setPrintSpaceAfterFullCompletion(print);
+        }
     }
 
     @JRubyMethod(name = "completion_case_fold", module = true)
