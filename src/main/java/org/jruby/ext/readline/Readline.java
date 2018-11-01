@@ -87,8 +87,8 @@ public class Readline {
         createReadline(runtime);
     }
 
-    public static void createReadline(Ruby runtime) {
-        ConsoleHolder holder = new ConsoleHolder();
+    public static void createReadline(final Ruby runtime) {
+        final ConsoleHolder holder = new ConsoleHolder();
 
         RubyModule mReadline = runtime.defineModule("Readline");
 
@@ -104,6 +104,13 @@ public class Readline {
 
         // MRI does similar thing on MacOS X with 'EditLine wrapper'.
         mReadline.setConstant("VERSION", runtime.newString("JLine wrapper"));
+
+        runtime.addInternalFinalizer(new Finalizable() {
+            public void finalize() throws Exception {
+                holder.readline.getTerminal().restore();
+                holder.readline.close();
+            }
+        });
     }
 
     // We lazily initialize this in case Readline.readline has been overridden in ruby (s_readline)
