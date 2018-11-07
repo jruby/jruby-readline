@@ -195,26 +195,29 @@ public class Readline {
 
     @JRubyMethod(name = "readline", module = true, visibility = PRIVATE)
     public static IRubyObject readline(ThreadContext context, IRubyObject recv) {
-        return readline(context, recv, RubyString.newEmptyString(context.runtime));
+        return readlineImpl(context, "", false);
     }
 
     @JRubyMethod(name = "readline", module = true, visibility = PRIVATE)
     public static IRubyObject readline(ThreadContext context, IRubyObject recv, IRubyObject prompt) {
-        return readline(context, recv, prompt, context.runtime.getFalse());
+        return readlineImpl(context, prompt.toString(), false);
     }
 
     @JRubyMethod(name = "readline", module = true, visibility = PRIVATE)
-    public static IRubyObject readline(ThreadContext context, IRubyObject recv, IRubyObject prompt, IRubyObject add_to_hist) {
-        Ruby runtime = context.runtime;
+    public static IRubyObject readline(ThreadContext context, IRubyObject recv, IRubyObject prompt, IRubyObject addHistory) {
+        return readlineImpl(context, prompt.toString(), addHistory.isTrue());
+    }
+
+    private static IRubyObject readlineImpl(ThreadContext context, String prompt, final boolean addHistory) {
+        final Ruby runtime = context.runtime;
         ConsoleHolder holder = getHolderWithReadline(runtime);
         holder.readline.setExpandEvents(false);
-        
-        IRubyObject line = context.nil;
-        String v;
+
+        String line;
         while (true) {
             try {
                 holder.readline.getTerminal().setEchoEnabled(false);
-                v = holder.readline.readLine(prompt.toString());
+                line = holder.readline.readLine(prompt);
                 break;
             } catch (IOException ioe) {
                 throw runtime.newIOErrorFromException(ioe);
@@ -222,23 +225,20 @@ public class Readline {
                 holder.readline.getTerminal().setEchoEnabled(true);
             }
         }
-        
-        if (null != v) {
-            if (add_to_hist.isTrue()) {
-                holder.readline.getHistory().add(v);
-            }
 
-            // Enebo: This is a little weird and a little broken.  We just ask
-            // for the bytes and hope they match default_external.  This will 
-            // work for common cases, but not ones in which the user explicitly
-            // sets the default_external to something else.  The second problem
-            // is that no al M17n encodings are valid encodings in java.lang.String.
-            // We clearly need a byte[]-version of JLine since we cannot totally
-            // behave properly using Java Strings.
-            ByteList list = new ByteList(v.getBytes(), runtime.getDefaultExternalEncoding());
-            line = RubyString.newString(runtime, list);
-        }
-        return line;
+        if (line == null) return context.nil;
+
+        if (addHistory) holder.readline.getHistory().add(line);
+
+        // Enebo: This is a little weird and a little broken.  We just ask
+        // for the bytes and hope they match default_external.  This will
+        // work for common cases, but not ones in which the user explicitly
+        // sets the default_external to something else.  The second problem
+        // is that no al M17n encodings are valid encodings in java.lang.String.
+        // We clearly need a byte[]-version of JLine since we cannot totally
+        // behave properly using Java Strings.
+        ByteList bytes = new ByteList(line.getBytes(), runtime.getDefaultExternalEncoding());
+        return RubyString.newString(runtime, bytes);
     }
 
     @JRubyMethod(name = "input=", module = true, visibility = PRIVATE)
@@ -609,20 +609,20 @@ public class Readline {
         public ProcCompleter(IRubyObject proc) { this.proc = proc; }
 
         public static String getDelimiter() {
-            StringBuilder result = new StringBuilder(delimiters.length);
+            StringBuilder str = new StringBuilder(delimiters.length);
             for (String delimiter : delimiters) {
-                result.append(delimiter);
+                str.append(delimiter);
             }
-            return result.toString();
+            return str.toString();
         }
 
         public static void setDelimiter(String delimiter) {
-            List<String> l = new ArrayList<String>();
+            List<String> list = new ArrayList<String>();
             CharBuffer buf = CharBuffer.wrap(delimiter);
             while (buf.hasRemaining()) {
-                l.add(String.valueOf(buf.get()));
+                list.add(String.valueOf(buf.get()));
             }
-            delimiters = l.toArray(new String[l.size()]);
+            delimiters = list.toArray(new String[list.size()]);
         }
 
         private int wordIndexOf(String buffer) {
