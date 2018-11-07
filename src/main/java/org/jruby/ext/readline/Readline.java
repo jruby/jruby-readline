@@ -39,6 +39,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
+import jline.*;
 import jline.console.ConsoleReader;
 import jline.console.CursorBuffer;
 import jline.console.completer.CandidateListCompletionHandler;
@@ -115,22 +116,26 @@ public class Readline {
 
     // We lazily initialize this in case Readline.readline has been overridden in ruby (s_readline)
     protected static void initReadline(final Ruby runtime, final ConsoleHolder holder) {
+        final ConsoleReader readline;
         try {
-            holder.readline = new ConsoleReader(runtime.getInputStream(), runtime.getOutputStream());
+            final Terminal terminal = TerminalFactory.create();
+            readline = holder.readline = new ConsoleReader(null, runtime.getInputStream(), runtime.getOutputStream(), terminal);
         } catch (IOException ioe) {
             throw runtime.newIOErrorFromException(ioe);
         }
-        holder.readline.setHistoryEnabled(false);
-        holder.readline.setPaginationEnabled(true);
-        holder.readline.setBellEnabled(true);
+
+        readline.setHistoryEnabled(false);
+        readline.setPaginationEnabled(true);
+        readline.setBellEnabled(true);
+
         if (holder.currentCompletor == null) {
             holder.currentCompletor = new RubyFileNameCompletor();
         }
-        holder.readline.addCompleter(holder.currentCompletor);
-        holder.readline.setHistory(holder.history);
+        readline.addCompleter(holder.currentCompletor);
+        readline.setHistory(holder.history);
 
         // JRUBY-852, ignore escape key (it causes IRB to quit if we pass it out through readline)
-        holder.readline.addTriggeredAction(ESC_KEY_CODE, new ActionListener() {
+        readline.addTriggeredAction(ESC_KEY_CODE, new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 try {
                     holder.readline.beep();
