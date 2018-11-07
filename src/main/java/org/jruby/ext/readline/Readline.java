@@ -56,6 +56,8 @@ import org.jruby.runtime.ThreadContext;
 import static org.jruby.runtime.Visibility.*;
 import org.jruby.runtime.builtin.IRubyObject;
 import org.jruby.util.ByteList;
+import org.jruby.util.log.Logger;
+import org.jruby.util.log.LoggerFactory;
 
 /**
  * @author <a href="mailto:ola.bini@ki.se">Ola Bini</a>
@@ -64,11 +66,15 @@ import org.jruby.util.ByteList;
  */
 @JRubyModule(name = "Readline")
 public class Readline {
-    public static final char ESC_KEY_CODE = (char)27;
+
     private final static boolean DEBUG = false;
+
+    private static final Logger LOG = LoggerFactory.getLogger(Readline.class);
 
     static {
         if (DEBUG) {
+            LOG.setDebugEnable(true);
+
             try {
                 if (System.getProperty("jline.internal.Log.debug") == null) {
                     System.setProperty("jline.internal.Log.debug", "true");
@@ -77,6 +83,7 @@ public class Readline {
         }
     }
 
+    public static final char ESC_KEY_CODE = (char) 27;
     public static class ConsoleHolder {
         public ConsoleReader readline;
         transient volatile Completer currentCompletor;
@@ -104,13 +111,6 @@ public class Readline {
 
         // MRI does similar thing on MacOS X with 'EditLine wrapper'.
         mReadline.setConstant("VERSION", runtime.newString("JLine wrapper"));
-
-        runtime.addInternalFinalizer(new Finalizable() {
-            public void finalize() throws Exception {
-                holder.readline.getTerminal().restore();
-                holder.readline.close();
-            }
-        });
     }
 
     // We lazily initialize this in case Readline.readline has been overridden in ruby (s_readline)
@@ -134,8 +134,25 @@ public class Readline {
             public void actionPerformed(ActionEvent e) {
                 try {
                     holder.readline.beep();
-                } catch (IOException ioe) {
-                    if (DEBUG) ioe.printStackTrace(System.err); // ignore
+                } catch (IOException ex) {
+                    LOG.debug(ex);
+                }
+            }
+        });
+        runtime.addInternalFinalizer(new Finalizable() {
+            public void finalize() throws Exception {
+                LOG.debug("finalizing readline (console) backend");
+
+                try {
+                    holder.readline.close();
+                } catch (Exception ex) {
+                    LOG.debug("failed to close console reader:", ex);
+                }
+
+                try {
+                    holder.readline.getTerminal().restore();
+                } catch (Exception ex) {
+                    LOG.debug("failed to restore terminal:", ex);
                 }
             }
         });
