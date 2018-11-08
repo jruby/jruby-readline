@@ -221,16 +221,12 @@ public class Readline {
         holder.readline.setExpandEvents(false);
 
         String line;
-        while (true) {
-            try {
-                holder.readline.getTerminal().setEchoEnabled(false);
-                line = holder.readline.readLine(prompt);
-                break;
-            } catch (IOException ioe) {
-                throw runtime.newIOErrorFromException(ioe);
-            } finally {
-                holder.readline.getTerminal().setEchoEnabled(true);
-            }
+        try {
+            line = readlineLoop(holder.readline, prompt);
+        } catch (IOException ex) {
+            throw runtime.newIOErrorFromException(ex);
+        } catch (Exception ex) {
+            Helpers.throwException(ex); return null; // likely init/restore failure
         }
 
         if (line == null) return context.nil;
@@ -246,6 +242,17 @@ public class Readline {
         // behave properly using Java Strings.
         ByteList bytes = new ByteList(line.getBytes(), runtime.getDefaultExternalEncoding());
         return RubyString.newString(runtime, bytes);
+    }
+
+    private static String readlineLoop(final ConsoleReader reader, final String prompt) throws Exception {
+        while (true) {
+            try {
+                reader.getTerminal().init();
+                return reader.readLine(prompt);
+            } finally {
+                reader.getTerminal().restore();
+            }
+        }
     }
 
     @JRubyMethod(name = "input=", module = true, visibility = PRIVATE)
