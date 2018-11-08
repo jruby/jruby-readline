@@ -127,6 +127,7 @@ public class Readline {
         readline.setHistoryEnabled(false);
         readline.setPaginationEnabled(true);
         readline.setBellEnabled(true);
+        readline.setHandleLitteralNext(false);
 
         if (holder.currentCompletor == null) {
             holder.currentCompletor = new RubyFileNameCompletor();
