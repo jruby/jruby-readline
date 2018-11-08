@@ -119,7 +119,7 @@ public class Readline {
         final ConsoleReader readline;
         try {
             final Terminal terminal = TerminalFactory.create();
-            readline = holder.readline = new ConsoleReader(null, runtime.getInputStream(), runtime.getOutputStream(), terminal);
+            readline = holder.readline = new ConsoleReader("JRuby", runtime.getInputStream(), runtime.getOutputStream(), terminal);
         } catch (IOException ioe) {
             throw runtime.newIOErrorFromException(ioe);
         }
