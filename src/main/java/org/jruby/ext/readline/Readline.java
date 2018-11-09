@@ -85,6 +85,7 @@ public class Readline {
     }
 
     public static final char ESC_KEY_CODE = (char) 27;
+
     public static class ConsoleHolder {
         public ConsoleReader readline;
         transient volatile Completer currentCompletor;
@@ -116,27 +117,28 @@ public class Readline {
 
     // We lazily initialize this in case Readline.readline has been overridden in ruby (s_readline)
     protected static void initReadline(final Ruby runtime, final ConsoleHolder holder) {
-        final ConsoleReader readline;
+        final ConsoleReader reader;
         try {
             final Terminal terminal = TerminalFactory.create();
-            readline = holder.readline = new ConsoleReader("JRuby", runtime.getInputStream(), runtime.getOutputStream(), terminal);
+            reader = new ConsoleReader("JRuby", runtime.getInputStream(), runtime.getOutputStream(), terminal);
+            holder.readline = reader;
         } catch (IOException ioe) {
             throw runtime.newIOErrorFromException(ioe);
         }
 
-        readline.setHistoryEnabled(false);
-        readline.setPaginationEnabled(true);
-        readline.setBellEnabled(true);
-        readline.setHandleLitteralNext(false);
+        reader.setHistoryEnabled(false);
+        reader.setPaginationEnabled(true);
+        reader.setBellEnabled(true);
+        reader.setHandleLitteralNext(false);
 
         if (holder.currentCompletor == null) {
             holder.currentCompletor = new RubyFileNameCompletor();
         }
-        readline.addCompleter(holder.currentCompletor);
-        readline.setHistory(holder.history);
+        reader.addCompleter(holder.currentCompletor);
+        reader.setHistory(holder.history);
 
         // JRUBY-852, ignore escape key (it causes IRB to quit if we pass it out through readline)
-        readline.addTriggeredAction(ESC_KEY_CODE, new ActionListener() {
+        reader.addTriggeredAction(ESC_KEY_CODE, new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 try {
                     holder.readline.beep();
@@ -146,9 +148,9 @@ public class Readline {
             }
         });
 
-        RubyModule Readline = runtime.getModule("Readline");
+        RubyModule readline = runtime.getModule("Readline");
         BlockCallback callback = new BlockCallback() {
-            public IRubyObject call(ThreadContext context, IRubyObject[] iRubyObjects, Block block) {
+            public IRubyObject call(ThreadContext context, IRubyObject[] args, Block block) {
                 LOG.debug("finalizing readline (console) backend");
 
                 try {
@@ -166,8 +168,8 @@ public class Readline {
                 return context.nil;
             }
         };
-        Block block = CallBlock.newCallClosure(Readline, Readline, Signature.NO_ARGUMENTS, callback, runtime.getCurrentContext());
-        Readline.addFinalizer(RubyProc.newProc(runtime, block, block.type));
+        Block block = CallBlock.newCallClosure(readline, readline, Signature.NO_ARGUMENTS, callback, runtime.getCurrentContext());
+        readline.addFinalizer(RubyProc.newProc(runtime, block, block.type));
     }
 
     public static History getHistory(ConsoleHolder holder) {
@@ -175,24 +177,34 @@ public class Readline {
     }
 
     public static ConsoleHolder getHolder(Ruby runtime) {
-        return (ConsoleHolder) (runtime.getModule("Readline").dataGetStruct());
+        return getHolderImpl(runtime.getModule("Readline"));
+    }
+
+    private static ConsoleHolder getHolderImpl(final RubyModule readline) {
+        return (ConsoleHolder) readline.dataGetStruct();
     }
 
     public static ConsoleHolder getHolderWithReadline(Ruby runtime) {
-        ConsoleHolder holder = getHolder(runtime);
+        RubyModule readline = runtime.getModule("Readline");
+        ConsoleHolder holder = getHolderImpl(readline);
         if (holder.readline == null) {
-            initReadline(runtime, holder);
+            synchronized (holder) {
+                if (holder.readline == null) {
+                    initReadline(runtime, holder);
+                }
+            }
         }
         return holder;
     }
 
     public static void setCompletor(ConsoleHolder holder, Completer completor) {
-        if (holder.readline != null) {
-            holder.readline.removeCompleter(holder.currentCompletor);
+        final ConsoleReader reader = holder.readline;
+        if (reader != null) {
+            reader.removeCompleter(holder.currentCompletor);
         }
         holder.currentCompletor = completor;
-        if (holder.readline != null) {
-            holder.readline.addCompleter(holder.currentCompletor);
+        if (reader != null) {
+            reader.addCompleter(holder.currentCompletor);
         }
     }
 
@@ -218,11 +230,13 @@ public class Readline {
     private static IRubyObject readlineImpl(ThreadContext context, String prompt, final boolean addHistory) {
         final Ruby runtime = context.runtime;
         ConsoleHolder holder = getHolderWithReadline(runtime);
-        holder.readline.setExpandEvents(false);
+        final ConsoleReader reader = holder.readline;
+
+        reader.setExpandEvents(false);
 
         String line;
         try {
-            line = readlineLoop(holder.readline, prompt);
+            line = readlineLoop(reader, prompt);
         } catch (IOException ex) {
             throw runtime.newIOErrorFromException(ex);
         } catch (Exception ex) {
@@ -231,7 +245,7 @@ public class Readline {
 
         if (line == null) return context.nil;
 
-        if (addHistory) holder.readline.getHistory().add(line);
+        if (addHistory) reader.getHistory().add(line);
 
         // Enebo: This is a little weird and a little broken.  We just ask
         // for the bytes and hope they match default_external.  This will
@@ -304,10 +318,10 @@ public class Readline {
     public static IRubyObject s_get_screen_size(ThreadContext context, IRubyObject recv) {
         Ruby runtime = context.runtime;
         ConsoleHolder holder = getHolderWithReadline(runtime);
-        IRubyObject[] ary = new IRubyObject[2];
-        ary[0] = runtime.newFixnum(holder.readline.getTerminal().getHeight());
-        ary[1] = runtime.newFixnum(holder.readline.getTerminal().getWidth());
-        return RubyArray.newArray(runtime, ary);
+        final Terminal terminal = holder.readline.getTerminal();
+        IRubyObject h = runtime.newFixnum(terminal.getHeight());
+        IRubyObject w = runtime.newFixnum(terminal.getWidth());
+        return RubyArray.newArray(runtime, h, w);
     }
 
     @JRubyMethod(name = "set_screen_size", module = true, visibility = PRIVATE)
