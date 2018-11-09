@@ -52,13 +52,13 @@ import jline.console.history.MemoryHistory;
 import org.jruby.*;
 import org.jruby.anno.JRubyMethod;
 import org.jruby.anno.JRubyModule;
-import org.jruby.runtime.Block;
-import org.jruby.runtime.ThreadContext;
-import static org.jruby.runtime.Visibility.*;
+import org.jruby.runtime.*;
 import org.jruby.runtime.builtin.IRubyObject;
 import org.jruby.util.ByteList;
 import org.jruby.util.log.Logger;
 import org.jruby.util.log.LoggerFactory;
+
+import static org.jruby.runtime.Visibility.*;
 
 /**
  * @author <a href="mailto:ola.bini@ki.se">Ola Bini</a>
@@ -144,8 +144,10 @@ public class Readline {
                 }
             }
         });
-        runtime.addInternalFinalizer(new Finalizable() {
-            public void finalize() throws Exception {
+
+        RubyModule Readline = runtime.getModule("Readline");
+        BlockCallback callback = new BlockCallback() {
+            public IRubyObject call(ThreadContext context, IRubyObject[] iRubyObjects, Block block) {
                 LOG.debug("finalizing readline (console) backend");
 
                 try {
@@ -159,8 +161,12 @@ public class Readline {
                 } catch (Exception ex) {
                     LOG.debug("failed to restore terminal:", ex);
                 }
+
+                return context.nil;
             }
-        });
+        };
+        Block block = CallBlock.newCallClosure(Readline, Readline, Signature.NO_ARGUMENTS, callback, runtime.getCurrentContext());
+        Readline.addFinalizer(RubyProc.newProc(runtime, block, block.type));
     }
 
     public static History getHistory(ConsoleHolder holder) {
