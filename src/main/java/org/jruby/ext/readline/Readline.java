@@ -32,6 +32,8 @@ package org.jruby.ext.readline;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
 import java.nio.CharBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -119,7 +121,7 @@ public class Readline {
         final ConsoleReader readline;
         try {
             final Terminal terminal = TerminalFactory.create();
-            readline = holder.readline = new ConsoleReader(null, runtime.getInputStream(), runtime.getOutputStream(), terminal);
+            readline = holder.readline = new ConsoleReader(null, new FileInputStream(FileDescriptor.in), System.out, terminal);
         } catch (IOException ioe) {
             throw runtime.newIOErrorFromException(ioe);
         }
